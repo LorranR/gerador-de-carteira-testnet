@@ -1,0 +1,34 @@
+const bip32 = require('bip32');
+const bip39 = require('bip39');
+const bitcoin = require('bitcoinjs-lib');
+
+// rede testnet
+const network = bitcoin.networks.testnet;
+
+// derivação BIP49 (segwit compatível - P2SH-P2WPKH)
+const path = "m/49'/1'/0'/0/0";
+
+// gerar mnemonic
+let mnemonic = bip39.generateMnemonic();
+const seed = bip39.mnemonicToSeedSync(mnemonic);
+
+// raiz HD
+const root = bip32.fromSeed(seed, network);
+
+// derivar conta
+const account = root.derivePath(path);
+let node = account;
+
+// gerar endereço SegWit compatível (testnet)
+let btcAddress = bitcoin.payments.p2sh({
+    redeem: bitcoin.payments.p2wpkh({
+        pubkey: node.publicKey,
+        network
+    }),
+    network
+}).address;
+
+console.log("✔ Carteira gerada!");
+console.log("📌 Endereço:", btcAddress);
+console.log("🔑 Chave privada (WIF):", node.toWIF());
+console.log("🧠 Seed (mnemonic):", mnemonic);
